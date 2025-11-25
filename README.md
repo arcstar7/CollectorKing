@@ -84,7 +84,7 @@ fetch_rarities_by_set_code(set_code)
 fetch_price_for_set_code_and_rarity(set_code, rarity)
 
 logging_setup.py
-Expected to provide a setup_logging() function and configure the CollectorKing logger.
+logging mainly for troubleshooting
 
 ⚙️ Requirements
 Python 3.10+ (3.8+ may work, but 3.10+ recommended)
@@ -98,88 +98,65 @@ requests
 Install dependencies:
 
 bash
-Copy code
-pip install PySide6 requests
+'''pip install PySide6 requests'''
+
 (Optional) Create a virtual environment:
 
 bash
-Copy code
+
+```
 python -m venv .venv
 # Windows
 .venv\Scripts\activate
 # Linux/macOS
 source .venv/bin/activate
+```
+
+
 🚀 Getting Started
-Clone / copy the project
 
-bash
-Copy code
-git clone <your-repo-url> ygo-desktop-library
-cd ygo-desktop-library
-Ensure the folder has at least:
+```
+git clone https://github/com/arcstar7/CollectorKing
+```
 
-text
-Copy code
+## Ensure the folder has at least:
+
+```
 main.py
 rarity_resolver.py
-logging_setup.py   # you create this file
-Install dependencies
+logging_setup.py
+```
+
+
+## Install dependencies
 
 bash
-Copy code
+
+```
 pip install PySide6 requests
-Run the app
+```
 
-bash
-Copy code
+## Run the app
+
 python main.py
-On first run, the app will:
 
-Create ygo_collection.db and the cards table (if they don’t exist).
 
-Create the images/ directory for image caching.
+## On first run, the app will:
 
-📊 CSV Import Format
-The Import CSV button expects a file with at least a set code column.
-The app is flexible with header names and will normalize them.
+# 1. Create ygo_collection.db and the cards table (if they don’t exist).
 
-Supported header names
-Matching is case-insensitive and ignores spaces, underscores, and hyphens.
+# 2. Create the images/ directory for image caching.
 
-Set Code (required)
-Any of:
 
-set_code
+# 📊 CSV Import Format
 
-setcode
+## The Import CSV button expects a file with at least a set code column.
+## The app is flexible with header names and will normalize them.
 
-code
+### Supported header names
+### Matching is case-insensitive and ignores spaces, underscores, and hyphens.
 
-printcode
-
-cardsetcode
-
-cardcode
-
-Rarity (optional)
-Any of:
-
-rarity
-
-setrarity
-
-printrarity
-
-Quantity (optional, defaults to 1)
-Any of:
-
-quantity
-
-qty
-
-count
-
-amount
+Set Code, Rarity, Quantity
 
 Example CSV
 csv
