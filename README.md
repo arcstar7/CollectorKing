@@ -1,280 +1,422 @@
 # CollectorKing
-Yugioh TCG Collector Application Portfolio
-A small desktop app for managing a local Yu-Gi-Oh! TCG collection, backed by SQLite and powered by the YGOPRODeck API. Import your collection from CSV, automatically resolve card names/rarities/prices, cache images, and view totals in a PySide6 (Qt) UI. 
 
-main
+A small desktop app for managing a local **Yu-Gi-Oh! TCG** collection, backed by **SQLite** and powered by the **YGOPRODeck API**.  
 
-Features
+Import your collection from CSV, automatically resolve card names/rarities/prices, cache images, and view totals in a **PySide6 (Qt)** UI.
 
-CSV import of collection
+---
 
-Accepts a CSV of printed set codes (e.g. SOI-EN001) plus optional rarity & quantity.
+## ✨ Features
 
-Robust header handling (accepts set_code, code, printcode, cardsetcode, cardcode, etc.).
+- 📥 **CSV import of collection**
+  - Accepts a CSV of printed set codes (e.g. `SOI-EN001`) plus optional rarity & quantity.
+  - Flexible header handling (e.g. `set_code`, `code`, `printcode`, `cardsetcode`, `cardcode`, etc.).
+  - Optional rarity column with shorthand handling (e.g. `QCSE`, `Collectors Rare`).
 
-Optional rarity column with shorthand handling (e.g. QCSE, Collectors Rare). 
+- 🔍 **Automatic card metadata lookup**
+  - Uses `cardsetsinfo.php` from YGOPRODeck to fetch:
+    - Card name
+    - Set name
+    - Default rarity
+    - Default price (set price)
+  - Downloads card images via `cardinfo.php` and caches them under `images/`.
 
-main
+- 🎚️ **Multi-rarity resolution**
+  - Normalizes alias inputs like `qcse`, `platinum secret`, `collectors rare`, etc.
+  - If rarity is missing/unknown, queries `cardinfo.php` to find all rarities for the set code.
+  - If multiple rarities exist, shows a modal dialog so you can pick the correct one.
 
-Automatic card metadata lookup
+- 💰 **Accurate rarity-specific pricing**
+  - Uses `fetch_price_for_set_code_and_rarity` to retrieve price for the exact `(set_code, rarity)` when possible.
+  - Falls back to `set_price` from `cardsetsinfo` if no rarity-specific price is available.
 
-Uses cardsetsinfo.php from YGOPRODeck to fetch name, set name, default rarity, and price for each set code.
+- 💾 **SQLite collection database**
+  - Stores cards in `ygo_collection.db` in a `cards` table with fields:
+    - `set_code`, `name`, `set_name`, `rarity`
+    - `price`, `quantity`
+    - `image_paths`, `ygopro_id`
+    - `last_updated`
 
-Downloads card images via cardinfo.php and caches them under images/. 
+- 🖥️ **Desktop UI (PySide6 / Qt)**
+  - Tabular view of your collection with:
+    - Thumbnail image
+    - Name, set code, set name, rarity
+    - Editable quantity
+    - Unit price, line total, last updated
+  - Live total collection value displayed in the toolbar.
+  - Actions: **Import CSV**, **Refresh Prices**, **Export CSV**.
 
-main
+- 📝 **Logging**
+  - Uses a dedicated `CollectorKing` logger (via a shared `logging_setup.py`).
+  - Supports `COLLECTORKING_DEBUG=1` environment variable to enable debug logging.
 
-Multi-rarity resolution
+---
 
-Normalizes alias inputs like qcse, platinum secret, collectors rare, etc.
+## 📂 Project Structure
 
-If rarity is missing/unknown, queries cardinfo.php to find all rarities for the set code.
+```text
+ygo-desktop-library/
+├─ main.py             # Main PySide6 app, DB, CSV, YGOPRODeck integration, UI
+├─ rarity_resolver.py  # Rarity & rarity-specific price helpers
+├─ logging_setup.py    # Your logging config (expected, not included)
+├─ ygo_collection.db   # SQLite DB (created at runtime)
+└─ images/             # Cached card images (created at runtime)
+Key files:
 
-If multiple rarities exist, shows a modal dialog so you can pick the correct one.
+main.py
+Application entry point. Contains:
 
-Accurate rarity-specific pricing
+Qt UI classes
 
-Uses fetch_price_for_set_code_and_rarity to retrieve price for the exact (set_code, rarity) from YGOPRODeck when possible. 
+Database initialization & upsert logic
 
-rarity_resolver
+CSV import/export logic
 
-Falls back to set_price from cardsetsinfo if a rarity-specific price isn’t available. 
+YGOPRODeck API integration
 
-main
+Price refresh background worker
 
-SQLite collection database
+rarity_resolver.py
+Rarity/premium helper module with:
 
-Stores cards in ygo_collection.db in a cards table with fields: set_code, name, set_name, rarity, price, quantity, image_paths, ygopro_id, last_updated. 
+fetch_rarities_by_set_code(set_code)
 
-main
+fetch_price_for_set_code_and_rarity(set_code, rarity)
 
-Desktop UI (PySide6 / Qt)
+logging_setup.py
+Expected to provide a setup_logging() function and configure the CollectorKing logger.
 
-Tabular view of your collection with:
+⚙️ Requirements
+Python 3.10+ (3.8+ may work, but 3.10+ recommended)
 
-Thumbnail image
-
-Name, set code, set name, rarity
-
-Editable quantity
-
-Unit price, line total, last updated
-
-Live total value displayed in the toolbar.
-
-Actions: Import CSV, Refresh Prices, Export CSV. 
-
-main
-
-Logging
-
-Uses a dedicated CollectorKing logger and expects a shared logging_setup.py.
-
-Honors a COLLECTORKING_DEBUG=1 environment variable to flip logging to DEBUG. 
-
-main
-
-Project Structure
-
-main.py — main application entry point, Qt UI, database layer, CSV import/export, YGOPRODeck integration, and price refresh logic. 
-
-main
-
-rarity_resolver.py — helpers for resolving rarities & prices via YGOPRODeck (fetch_rarities_by_set_code, fetch_price_for_set_code_and_rarity). 
-
-rarity_resolver
-
-ygo_collection.db — SQLite database created on first run (if not present). 
-
-main
-
-images/ — local cache of downloaded card images (created automatically).
-
-logging_setup.py — shared logging configuration module (expected, not included here). 
-
-main
-
-Requirements
-
-Python 3.10+ (3.8+ should work, but tested with modern Python)
-
-Dependencies:
+Python packages:
 
 PySide6
 
 requests
 
-Standard library modules (sqlite3, csv, logging, etc.) are already included. 
+Install dependencies:
 
-main
-
-Install with:
-
+bash
+Copy code
 pip install PySide6 requests
+(Optional) Create a virtual environment:
 
-Setup & Running
-
-Clone / copy the project files into a directory, e.g.:
-
-ygo-desktop-library/
-  main.py
-  rarity_resolver.py
-  logging_setup.py   # you provide this
-
-
-Create a virtual environment (optional but recommended):
-
+bash
+Copy code
 python -m venv .venv
 # Windows
 .venv\Scripts\activate
 # Linux/macOS
 source .venv/bin/activate
+🚀 Getting Started
+Clone / copy the project
 
+bash
+Copy code
+git clone <your-repo-url> ygo-desktop-library
+cd ygo-desktop-library
+Ensure the folder has at least:
 
-Install dependencies:
+text
+Copy code
+main.py
+rarity_resolver.py
+logging_setup.py   # you create this file
+Install dependencies
 
+bash
+Copy code
 pip install PySide6 requests
+Run the app
 
-
-Run the app:
-
+bash
+Copy code
 python main.py
+On first run, the app will:
 
-
-On first run, this will:
-
-Create ygo_collection.db and the cards table (if missing).
+Create ygo_collection.db and the cards table (if they don’t exist).
 
 Create the images/ directory for image caching.
 
-CSV Import Format
-
-The Import CSV button expects a file with at least a set code column. The app is flexible with header names and will normalize them. 
-
-main
+📊 CSV Import Format
+The Import CSV button expects a file with at least a set code column.
+The app is flexible with header names and will normalize them.
 
 Supported header names
+Matching is case-insensitive and ignores spaces, underscores, and hyphens.
 
-All matching is case-insensitive and ignores spaces/underscores/hyphens.
+Set Code (required)
+Any of:
 
-Set code (required) — any of:
+set_code
 
-set_code, setcode, code, printcode, cardsetcode, cardcode 
+setcode
 
-main
+code
 
-Rarity (optional) — any of:
+printcode
 
-rarity, setrarity, printrarity 
+cardsetcode
 
-main
+cardcode
 
-Quantity (optional, defaults to 1) — any of:
+Rarity (optional)
+Any of:
 
-quantity, qty, count, amount 
+rarity
 
-main
+setrarity
+
+printrarity
+
+Quantity (optional, defaults to 1)
+Any of:
+
+quantity
+
+qty
+
+count
+
+amount
 
 Example CSV
+csv
+Copy code
 set_code,rarity,quantity
 SOI-EN001,Ultimate Rare,1
 MFC-105,QCSE,2
 LOB-001,,3
-
-
 Behavior:
 
-SOI-EN001 → uses provided rarity "Ultimate Rare" as-is.
+SOI-EN001
+Uses the provided rarity "Ultimate Rare" as-is.
 
-MFC-105 → rarity alias "QCSE" will be normalized to "Quarter Century Secret Rare". 
+MFC-105
+Rarity alias "QCSE" is normalized to "Quarter Century Secret Rare".
 
-main
+LOB-001
+Rarity is blank:
 
-LOB-001 → rarity is blank; the app will call fetch_rarities_by_set_code to discover rarities and may prompt you to choose if multiple exist.
+App calls fetch_rarities_by_set_code("LOB-001").
 
-Rarity & Pricing Logic
+If multiple rarities exist, it shows a popup to let you choose.
 
-During import for each row:
+If only one rarity exists, that one is auto-selected.
 
-Normalize rarity text with alias map (RARITY_ALIASES).
+🧠 Rarity & Pricing Logic
+During Import
+For each row in the CSV:
 
-If rarity is missing/unknown, call fetch_rarities_by_set_code(set_code).
+Normalize rarity
 
-If multiple rarities: show a modal rarity picker.
+Uses an internal RARITY_ALIASES map to normalize known aliases:
 
-If one rarity: use that.
+e.g. "qcse" → "Quarter Century Secret Rare"
 
-Call upsert_card_from_set_code(set_code, rarity, quantity):
+e.g. "collectors rare" / "cr" → "Collector's Rare"
 
-Fetch name, set name, default rarity, and set price via cardsetsinfo.php.
+Resolve missing rarity
 
-If rarity is provided, try fetch_price_for_set_code_and_rarity first.
+If no rarity is provided (or it’s unknown):
 
-Fallback to set_price from cardsetsinfo if rarity-specific price isn’t found.
+Calls fetch_rarities_by_set_code(set_code) from rarity_resolver.py.
 
-Download up to 3 images and store comma-separated paths in image_paths.
+If multiple rarities are returned:
 
-Insert/update the row in cards with last_updated timestamp.
+User gets a modal dialog to select the correct rarity.
 
-Refresh Prices:
+If one rarity is returned:
 
-For each card in the DB:
+Uses that rarity automatically.
 
-If a rarity is already set, try to pull the exact rarity price.
+Upsert into database
 
-If no rarity, use API-provided set_rarity and set_price.
+Calls something like upsert_card_from_set_code(set_code, rarity, quantity) which:
 
-Update price (and sometimes rarity) and refresh the UI once done.
+Fetches card info from YGOPRODeck (cardsetsinfo.php).
 
-UI Usage
+Gets:
 
-Import CSV
-Load or update your collection. The app will:
+Card name
 
-Read the file (auto-sniff delimiter).
+Set name
 
-Map headers to expected fields.
+Default rarity
 
-Resolve each row via YGOPRODeck.
+Default set price
 
-Show a summary of successes/failures at the end. 
+If a rarity is provided:
 
-main
+Attempts rarity-specific pricing via fetch_price_for_set_code_and_rarity.
+
+Falls back to set_price when rarity-specific pricing isn’t available.
+
+Downloads up to 3 images:
+
+Saves their paths in image_paths as a comma-separated list.
+
+Inserts or updates the row in the cards table.
+
+Updates last_updated with the current timestamp.
 
 Refresh Prices
-Runs a background thread to refresh prices for all cards, updating the UI when complete. 
+When you click Refresh Prices:
 
-main
+A background worker iterates over all cards in the database.
+
+For each card:
+
+If a rarity is set:
+
+Tries to pull rarity-specific pricing via fetch_price_for_set_code_and_rarity.
+
+If no rarity:
+
+Uses the API-provided default set_rarity and set_price.
+
+Updates price (and possibly rarity) in the DB.
+
+Refreshes the UI and total collection value when complete.
+
+🖱️ UI Usage
+Main Table
+For each card, the main table shows:
+
+Thumbnail image (first path in image_paths)
+
+Card name
+
+Set code
+
+Set name
+
+Rarity
+
+Unit price
+
+Quantity
+
+Line total (price × quantity)
+
+Last updated
+
+Actions
+Import CSV
+
+Prompts for a CSV file.
+
+Auto-detects delimiter.
+
+Maps headers to expected fields.
+
+Resolves set codes/rarities via the API.
+
+Shows a summary of successes/errors at the end.
+
+Refresh Prices
+
+Runs a background price refresh for all cards in the DB.
+
+Updates table values and the grand total when done.
 
 Export CSV
-Exports the current collection to a CSV with:
 
-set_code, name, set_name, rarity, quantity, unit_price, line_total, image_paths, last_updated. 
+Exports the current collection to a CSV with columns like:
 
-main
+set_code
 
-Editing quantities
+name
 
-Double-click the Quantity column for a card to edit.
+set_name
 
-Changes are written directly to the database and the line total / grand total are recalculated. 
+rarity
 
-main
+quantity
 
-Logging
+unit_price
 
-The app expects a logging_setup.py that exposes setup_logging() and configures a CollectorKing logger. A typical minimalist implementation might:
+line_total
 
-Set up console/file handlers.
+image_paths
 
-Use COLLECTORKING_DEBUG env var to switch level to DEBUG.
+last_updated
 
-main.py calls setup_logging() as early as possible and then uses a nested logger (CollectorKing.main) plus a LoggerAdapter for per-run context during imports.
+Editing Quantities
+Double-click the Quantity cell for a card.
 
-Notes & Limitations
+Enter the new quantity and confirm.
 
-Internet required: all metadata, images, and prices come from the YGOPRODeck public API.
+The app:
 
-No API key is required as written, but you should respect YGOPRODeck’s rate limits and usage policies.
+Updates the database record.
 
-Schema: the DB schema is simple and opinionated; if you extend it, keep db_init() and db_upsert() in sync.
+Recalculates line total.
+
+Recalculates the grand total.
+
+🧾 Logging
+The app expects a logging_setup.py with a function:
+
+python
+Copy code
+def setup_logging():
+    ...
+A simple example:
+
+python
+Copy code
+import logging
+import os
+
+def setup_logging():
+    level = logging.DEBUG if os.getenv("COLLECTORKING_DEBUG") == "1" else logging.INFO
+    logger = logging.getLogger("CollectorKing")
+    logger.setLevel(level)
+
+    if not logger.handlers:
+        ch = logging.StreamHandler()
+        ch.setLevel(level)
+        formatter = logging.Formatter(
+            "[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s"
+        )
+        ch.setFormatter(formatter)
+        logger.addHandler(ch)
+main.py then does something like:
+
+python
+Copy code
+from logging_setup import setup_logging
+
+setup_logging()
+logger = logging.getLogger("CollectorKing.main")
+📌 Notes & Limitations
+🌐 Internet required
+All metadata, images, and prices are retrieved from the YGOPRODeck API.
+
+🔑 No API key required
+(As currently implemented), but you should:
+
+Respect YGOPRODeck rate limits.
+
+Cache results whenever possible.
+
+🗄️ Database schema
+The schema is simple and opinionated.
+If you change it, make sure to update:
+
+DB initialization logic
+
+Upsert/update code
+
+Any queries that assume the old structure.
+
+🧩 Next Steps / Ideas
+Add card search & filtering in the UI.
+
+Support multiple collections / profiles.
+
+Add automatic backup/export on exit.
+
+Track purchase price vs current price for profit/loss views.
